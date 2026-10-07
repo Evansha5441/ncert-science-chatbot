@@ -3,7 +3,13 @@ import json
 import sqlite3
 import re
 import numpy as np
-import faiss
+    try:
+        import faiss
+        HAS_FAISS = True
+    except ImportError:
+        HAS_FAISS = False
+        faiss = None
+
 from typing import Optional, Tuple, List, Dict
 from sentence_transformers import SentenceTransformer
 from app.config import settings

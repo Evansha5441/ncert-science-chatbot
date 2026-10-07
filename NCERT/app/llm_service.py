@@ -9,37 +9,50 @@ class LLMService:
         self.client = None
         self._init_client()
 
+    def _get_secret(self, key: str, default: str = "") -> str:
+        # Check Streamlit secrets first, then env/settings
+        try:
+            import streamlit as st
+            if key in st.secrets:
+                return str(st.secrets[key])
+        except Exception:
+            pass
+        return getattr(settings, key, "") or os.environ.get(key, default)
+
     def _init_client(self):
-        if self.provider == "groq" or (not self.client and settings.GROQ_API_KEY):
-            api_key = settings.GROQ_API_KEY or os.environ.get("GROQ_API_KEY", "")
+        self.provider = self._get_secret("LLM_PROVIDER", "groq").lower()
+
+        if self.provider == "groq" or (not self.client and self._get_secret("GROQ_API_KEY")):
+            api_key = self._get_secret("GROQ_API_KEY")
             if api_key:
                 self.client = OpenAI(
                     base_url="https://api.groq.com/openai/v1",
                     api_key=api_key
                 )
-                self.model = settings.GROQ_MODEL
+                self.model = self._get_secret("GROQ_MODEL", "qwen/qwen3.8-27b")
                 self.provider = "groq"
                 return
 
-        if self.provider == "gemini" or (not self.client and settings.GEMINI_API_KEY):
-            api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY", "")
+        if self.provider == "gemini" or (not self.client and self._get_secret("GEMINI_API_KEY")):
+            api_key = self._get_secret("GEMINI_API_KEY")
             if api_key:
                 # Gemini OpenAI compatible endpoint
                 self.client = OpenAI(
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                     api_key=api_key
                 )
-                self.model = settings.GEMINI_MODEL
+                self.model = self._get_secret("GEMINI_MODEL", "gemini-1.5-flash")
                 self.provider = "gemini"
                 return
 
-        if self.provider == "openai" or (not self.client and settings.OPENAI_API_KEY):
-            api_key = settings.OPENAI_API_KEY or os.environ.get("OPENAI_API_KEY", "")
+        if self.provider == "openai" or (not self.client and self._get_secret("OPENAI_API_KEY")):
+            api_key = self._get_secret("OPENAI_API_KEY")
             if api_key:
                 self.client = OpenAI(api_key=api_key)
-                self.model = settings.OPENAI_MODEL
+                self.model = self._get_secret("OPENAI_MODEL", "gpt-4o-mini")
                 self.provider = "openai"
                 return
+
 
     def is_configured(self) -> bool:
         return self.client is not None

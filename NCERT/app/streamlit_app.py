@@ -1,6 +1,17 @@
+import os
+import sys
+
+# Ensure repository root is in Python sys.path regardless of execution working directory
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
+for path in [PARENT_DIR, CURRENT_DIR]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
 import time
 import requests
 import streamlit as st
+
 
 # Configure page
 st.set_page_config(
